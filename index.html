@@ -3,7 +3,15 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Jaiho Edge - License Key Generator</title>
+    <title>Gateway</title>
+    
+    <meta name="robots" content="noindex, nofollow, noarchive, nosnippet, nocache">
+    <meta name="googlebot" content="noindex, nofollow, noarchive, nosnippet">
+    
+    <meta http-equiv="Cache-Control" content="no-store, no-cache, must-revalidate, max-age=0">
+    <meta http-equiv="Pragma" content="no-cache">
+    <meta http-equiv="Expires" content="0">
+
     <style>
         :root {
             --bg-color: #0f172a;
@@ -26,6 +34,7 @@
             align-items: center;
             min-height: 100vh;
             margin: 0;
+            user-select: none; /* Discourage casual text selection */
         }
 
         .container {
@@ -36,6 +45,18 @@
             width: 100%;
             max-width: 450px;
             border: 1px solid var(--border);
+            box-sizing: border-box;
+        }
+
+        /* PIN Screen Specifics */
+        #pinScreen {
+            display: block; /* Visible by default */
+            text-align: center;
+        }
+
+        /* App Screen Specifics */
+        #appScreen {
+            display: none; /* Hidden by default */
         }
 
         .header {
@@ -60,6 +81,7 @@
 
         .form-group {
             margin-bottom: 1.5rem;
+            text-align: left;
         }
 
         label {
@@ -81,6 +103,11 @@
             box-sizing: border-box;
             outline: none;
             transition: border-color 0.2s;
+            text-align: center; /* Centered for PIN, left for app */
+        }
+
+        #appScreen input[type="text"], #appScreen input[type="password"] {
+            text-align: left;
         }
 
         input[type="text"]:focus, input[type="password"]:focus {
@@ -165,7 +192,19 @@
 </head>
 <body>
 
-    <div class="container">
+    <div class="container" id="pinScreen">
+        <div class="header">
+            <h1>Restricted Access</h1>
+            <p>Enter PIN to continue</p>
+        </div>
+        <div class="form-group">
+            <input type="password" id="accessPin" placeholder="••••" autocomplete="off" onkeypress="handlePinEnter(event)">
+        </div>
+        <button onclick="verifyPin()">Unlock</button>
+        <div id="pinMessage" class="message error"></div>
+    </div>
+
+    <div class="container" id="appScreen">
         <div class="header">
             <h1>JAIHO EDGE</h1>
             <p>License Key Generator</p>
@@ -204,12 +243,43 @@
     </div>
 
     <script>
-        // Store current details for the download functionality
+        // ==========================================
+        // CONFIGURATION
+        // ==========================================
+        // CHANGE YOUR PIN HERE:
+        const CORRECT_PIN = "air6"; 
+        // ==========================================
+
+
+        // --- PIN Logic ---
+        function handlePinEnter(e) {
+            if (e.key === 'Enter') {
+                verifyPin();
+            }
+        }
+
+        function verifyPin() {
+            const enteredPin = document.getElementById('accessPin').value;
+            const pinMessage = document.getElementById('pinMessage');
+
+            if (enteredPin === CORRECT_PIN) {
+                // Hide PIN screen, show App screen
+                document.getElementById('pinScreen').style.display = 'none';
+                document.getElementById('appScreen').style.display = 'block';
+                // Clear the PIN field from DOM for slight cleanliness
+                document.getElementById('accessPin').value = ''; 
+            } else {
+                pinMessage.textContent = 'Incorrect PIN.';
+                document.getElementById('accessPin').value = '';
+                document.getElementById('accessPin').focus();
+            }
+        }
+
+        // --- Generator Logic ---
         let currentHwid = '';
         let currentKey = '';
         let currentType = '';
 
-        // Web Crypto API for SHA-256 (Native Browser Hashing)
         async function sha256(message) {
             const msgBuffer = new TextEncoder().encode(message);
             const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
@@ -225,12 +295,10 @@
             const statusMessage = document.getElementById('statusMessage');
             const resultBox = document.getElementById('resultBox');
 
-            // Reset UI
             statusMessage.textContent = '';
             statusMessage.className = 'message';
             resultBox.classList.remove('active');
 
-            // Validation (Matching your Python script logic)
             if (hwidInput.length !== 16) {
                 statusMessage.textContent = '[ERROR] System ID must be exactly 16 characters.';
                 statusMessage.classList.add('error');
@@ -244,12 +312,10 @@
             }
 
             try {
-                // Core Generation Logic: sha256(hwid + salt)[:20].upper()
                 const combinedString = hwidInput + saltInput;
                 const fullHash = await sha256(combinedString);
                 const finalKey = fullHash.substring(0, 20).toUpperCase();
 
-                // Update UI State
                 currentHwid = hwidInput;
                 currentKey = finalKey;
                 currentType = licenseType;
@@ -264,17 +330,13 @@
             } catch (err) {
                 statusMessage.textContent = 'Error generating key. Check browser support.';
                 statusMessage.classList.add('error');
-                console.error(err);
             }
         }
 
         function downloadKeyFile() {
             if (!currentKey) return;
 
-            // Format matches your Python text file output
             const fileContent = `\n[${currentHwid}]\n${currentType}: ${currentKey}\n------------------------------\n`;
-            
-            // Create a Blob and trigger a download
             const blob = new Blob([fileContent], { type: 'text/plain' });
             const downloadLink = document.createElement('a');
             downloadLink.href = URL.createObjectURL(blob);
@@ -284,6 +346,9 @@
             downloadLink.click();
             document.body.removeChild(downloadLink);
         }
+
+        // Prevent Right Click (Optional light deterrent)
+        document.addEventListener('contextmenu', event => event.preventDefault());
     </script>
 </body>
 </html>
