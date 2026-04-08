@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Jaiho Edge - License Key Generator</title>
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --accent: #3b82f6;
+            --accent-hover: #2563eb;
+            --error: #ef4444;
+            --success: #10b981;
+            --border: #334155;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+
+        .container {
+            background-color: var(--card-bg);
+            padding: 2.5rem;
+            border-radius: 12px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+            width: 100%;
+            max-width: 450px;
+            border: 1px solid var(--border);
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 2rem;
+            border-bottom: 1px solid var(--border);
+            padding-bottom: 1rem;
+        }
+
+        .header h1 {
+            margin: 0;
+            font-size: 1.5rem;
+            color: var(--text-main);
+            letter-spacing: 1px;
+        }
+
+        .header p {
+            margin: 0.5rem 0 0 0;
+            color: var(--text-muted);
+            font-size: 0.9rem;
+        }
+
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-size: 0.9rem;
+            font-weight: 600;
+            color: var(--text-muted);
+        }
+
+        input[type="text"], input[type="password"] {
+            width: 100%;
+            padding: 0.75rem;
+            background-color: var(--bg-color);
+            border: 1px solid var(--border);
+            border-radius: 6px;
+            color: var(--text-main);
+            font-size: 1rem;
+            box-sizing: border-box;
+            outline: none;
+            transition: border-color 0.2s;
+        }
+
+        input[type="text"]:focus, input[type="password"]:focus {
+            border-color: var(--accent);
+        }
+
+        .radio-group {
+            display: flex;
+            gap: 1rem;
+            margin-top: 0.5rem;
+        }
+
+        .radio-label {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-weight: normal;
+            cursor: pointer;
+        }
+
+        button {
+            width: 100%;
+            padding: 0.875rem;
+            background-color: var(--accent);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            font-size: 1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background-color 0.2s;
+        }
+
+        button:hover {
+            background-color: var(--accent-hover);
+        }
+
+        .message {
+            margin-top: 1rem;
+            font-size: 0.9rem;
+            text-align: center;
+            min-height: 20px;
+        }
+
+        .error { color: var(--error); }
+        .success { color: var(--success); }
+
+        .result-box {
+            margin-top: 1.5rem;
+            padding: 1.5rem;
+            background-color: var(--bg-color);
+            border: 1px dashed var(--border);
+            border-radius: 6px;
+            display: none;
+            text-align: center;
+        }
+
+        .result-box.active {
+            display: block;
+        }
+
+        .key-display {
+            font-family: monospace;
+            font-size: 1.25rem;
+            color: var(--success);
+            margin: 1rem 0;
+            word-break: break-all;
+        }
+
+        .download-btn {
+            background-color: transparent;
+            border: 1px solid var(--border);
+            color: var(--text-muted);
+            margin-top: 1rem;
+        }
+
+        .download-btn:hover {
+            background-color: var(--border);
+            color: var(--text-main);
+        }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <div class="header">
+            <h1>JAIHO EDGE</h1>
+            <p>License Key Generator</p>
+        </div>
+
+        <div class="form-group">
+            <label for="hwid">System ID (HWID)</label>
+            <input type="text" id="hwid" placeholder="e.g., A5E8F3C9D1B2A456" maxlength="16" autocomplete="off">
+        </div>
+
+        <div class="form-group">
+            <label for="salt">Secret Salt</label>
+            <input type="password" id="salt" placeholder="Enter Trial or Full Salt" autocomplete="off">
+        </div>
+
+        <div class="form-group">
+            <label>License Type (For file output)</label>
+            <div class="radio-group">
+                <label class="radio-label">
+                    <input type="radio" name="licenseType" value="Trial" checked> Trial (15 Days)
+                </label>
+                <label class="radio-label">
+                    <input type="radio" name="licenseType" value="Full"> Full (Lifetime)
+                </label>
+            </div>
+        </div>
+
+        <button onclick="generateKey()">Generate License</button>
+        <div id="statusMessage" class="message"></div>
+
+        <div id="resultBox" class="result-box">
+            <div style="font-size: 0.85rem; color: var(--text-muted);" id="resultLabel">GENERATED KEY</div>
+            <div id="keyDisplay" class="key-display"></div>
+            <button class="download-btn" onclick="downloadKeyFile()">💾 Download to TXT</button>
+        </div>
+    </div>
+
+    <script>
+        // Store current details for the download functionality
+        let currentHwid = '';
+        let currentKey = '';
+        let currentType = '';
+
+        // Web Crypto API for SHA-256 (Native Browser Hashing)
+        async function sha256(message) {
+            const msgBuffer = new TextEncoder().encode(message);
+            const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+            const hashArray = Array.from(new Uint8Array(hashBuffer));
+            const hashHex = hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            return hashHex;
+        }
+
+        async function generateKey() {
+            const hwidInput = document.getElementById('hwid').value.trim().toUpperCase();
+            const saltInput = document.getElementById('salt').value;
+            const licenseType = document.querySelector('input[name="licenseType"]:checked').value;
+            const statusMessage = document.getElementById('statusMessage');
+            const resultBox = document.getElementById('resultBox');
+
+            // Reset UI
+            statusMessage.textContent = '';
+            statusMessage.className = 'message';
+            resultBox.classList.remove('active');
+
+            // Validation (Matching your Python script logic)
+            if (hwidInput.length !== 16) {
+                statusMessage.textContent = '[ERROR] System ID must be exactly 16 characters.';
+                statusMessage.classList.add('error');
+                return;
+            }
+
+            if (!saltInput) {
+                statusMessage.textContent = '[ERROR] Please enter the Secret Salt.';
+                statusMessage.classList.add('error');
+                return;
+            }
+
+            try {
+                // Core Generation Logic: sha256(hwid + salt)[:20].upper()
+                const combinedString = hwidInput + saltInput;
+                const fullHash = await sha256(combinedString);
+                const finalKey = fullHash.substring(0, 20).toUpperCase();
+
+                // Update UI State
+                currentHwid = hwidInput;
+                currentKey = finalKey;
+                currentType = licenseType;
+
+                document.getElementById('keyDisplay').textContent = finalKey;
+                document.getElementById('resultLabel').textContent = `${licenseType.toUpperCase()} KEY GENERATED`;
+                resultBox.classList.add('active');
+                
+                statusMessage.textContent = '✅ Key generated successfully!';
+                statusMessage.classList.add('success');
+
+            } catch (err) {
+                statusMessage.textContent = 'Error generating key. Check browser support.';
+                statusMessage.classList.add('error');
+                console.error(err);
+            }
+        }
+
+        function downloadKeyFile() {
+            if (!currentKey) return;
+
+            // Format matches your Python text file output
+            const fileContent = `\n[${currentHwid}]\n${currentType}: ${currentKey}\n------------------------------\n`;
+            
+            // Create a Blob and trigger a download
+            const blob = new Blob([fileContent], { type: 'text/plain' });
+            const downloadLink = document.createElement('a');
+            downloadLink.href = URL.createObjectURL(blob);
+            downloadLink.download = 'generated_keys.txt';
+            
+            document.body.appendChild(downloadLink);
+            downloadLink.click();
+            document.body.removeChild(downloadLink);
+        }
+    </script>
+</body>
+</html>
